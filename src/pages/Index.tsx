@@ -26,6 +26,67 @@ interface Comment {
   date: string;
 }
 
+interface ForumTopic {
+  id: number;
+  title: string;
+  author: string;
+  category: string;
+  replies: number;
+  views: number;
+  lastActivity: string;
+  posts: ForumPost[];
+}
+
+interface ForumPost {
+  id: number;
+  author: string;
+  text: string;
+  date: string;
+}
+
+const forumTopics: ForumTopic[] = [
+  {
+    id: 1,
+    title: 'Какое масло лучше использовать для турбированных двигателей?',
+    author: 'Сергей_М',
+    category: 'Техническая помощь',
+    replies: 24,
+    views: 342,
+    lastActivity: '2 часа назад',
+    posts: [
+      { id: 1, author: 'Сергей_М', text: 'Добрый день! Подскажите, какое масло лучше заливать в турбированный двигатель 2.0? Пробег 80 тыс км.', date: '15 ноября 2025, 10:15' },
+      { id: 2, author: 'МеханикПро', text: 'Рекомендую 5W-40 синтетику. Главное — соблюдать интервалы замены каждые 7500 км.', date: '15 ноября 2025, 11:30' },
+      { id: 3, author: 'AutoExpert', text: 'Согласен, синтетика обязательна. Я лью Mobil 1 уже 5 лет — никаких проблем.', date: '15 ноября 2025, 14:20' }
+    ]
+  },
+  {
+    id: 2,
+    title: 'Выбор между BMW X5 и Audi Q7',
+    author: 'Виктор2025',
+    category: 'Выбор автомобиля',
+    replies: 18,
+    views: 256,
+    lastActivity: '5 часов назад',
+    posts: [
+      { id: 4, author: 'Виктор2025', text: 'Не могу определиться между X5 F15 и Q7 первого поколения. Что надёжнее?', date: '14 ноября 2025, 16:40' },
+      { id: 5, author: 'AudiLover', text: 'Q7 комфортнее, но X5 динамичнее. Зависит от приоритетов.', date: '14 ноября 2025, 18:15' }
+    ]
+  },
+  {
+    id: 3,
+    title: 'Лучшие маршруты для автопутешествий по России',
+    author: 'Путешественник',
+    category: 'Общение',
+    replies: 42,
+    views: 589,
+    lastActivity: 'вчера',
+    posts: [
+      { id: 6, author: 'Путешественник', text: 'Поделитесь проверенными маршрутами! Планирую поездку летом.', date: '13 ноября 2025, 09:00' },
+      { id: 7, author: 'РоссияНаКолёсах', text: 'Рекомендую Золотое Кольцо — классика! Дороги хорошие, много достопримечательностей.', date: '13 ноября 2025, 12:30' }
+    ]
+  }
+];
+
 const articles: Article[] = [
   {
     id: 1,
@@ -65,10 +126,18 @@ const articles: Article[] = [
 ];
 
 export default function Index() {
+  const [currentSection, setCurrentSection] = useState<'blog' | 'forum'>('blog');
   const [selectedCategory, setSelectedCategory] = useState('Все');
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<ForumTopic | null>(null);
+  const [showNewTopicDialog, setShowNewTopicDialog] = useState(false);
   const [commentName, setCommentName] = useState('');
   const [commentText, setCommentText] = useState('');
+  const [newTopicTitle, setNewTopicTitle] = useState('');
+  const [newTopicCategory, setNewTopicCategory] = useState('Общение');
+  const [newTopicText, setNewTopicText] = useState('');
+  const [forumPostName, setForumPostName] = useState('');
+  const [forumPostText, setForumPostText] = useState('');
 
   const filteredArticles = selectedCategory === 'Все' 
     ? articles 
@@ -95,6 +164,60 @@ export default function Index() {
     }
   };
 
+  const handleCreateTopic = () => {
+    if (newTopicTitle && newTopicText && commentName) {
+      const newTopic: ForumTopic = {
+        id: Date.now(),
+        title: newTopicTitle,
+        author: commentName,
+        category: newTopicCategory,
+        replies: 0,
+        views: 0,
+        lastActivity: 'только что',
+        posts: [
+          {
+            id: Date.now(),
+            author: commentName,
+            text: newTopicText,
+            date: new Date().toLocaleString('ru-RU', { 
+              day: 'numeric', 
+              month: 'long', 
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+          }
+        ]
+      };
+      forumTopics.unshift(newTopic);
+      setNewTopicTitle('');
+      setNewTopicText('');
+      setNewTopicCategory('Общение');
+      setShowNewTopicDialog(false);
+    }
+  };
+
+  const handleAddForumPost = () => {
+    if (selectedTopic && forumPostName && forumPostText) {
+      const newPost: ForumPost = {
+        id: Date.now(),
+        author: forumPostName,
+        text: forumPostText,
+        date: new Date().toLocaleString('ru-RU', { 
+          day: 'numeric', 
+          month: 'long', 
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      };
+      selectedTopic.posts.push(newPost);
+      selectedTopic.replies++;
+      setForumPostName('');
+      setForumPostText('');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -106,10 +229,22 @@ export default function Index() {
             </h1>
           </div>
           <nav className="hidden md:flex gap-6">
-            <a href="#" className="text-sm font-medium transition-colors hover:text-primary">Главная</a>
-            <a href="#" className="text-sm font-medium transition-colors hover:text-primary">Новости</a>
-            <a href="#" className="text-sm font-medium transition-colors hover:text-primary">Обзоры</a>
-            <a href="#" className="text-sm font-medium transition-colors hover:text-primary">Статьи</a>
+            <button 
+              onClick={() => { setCurrentSection('blog'); setSelectedArticle(null); setSelectedTopic(null); }}
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                currentSection === 'blog' ? 'text-primary' : ''
+              }`}
+            >
+              Блог
+            </button>
+            <button 
+              onClick={() => { setCurrentSection('forum'); setSelectedArticle(null); setSelectedTopic(null); }}
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                currentSection === 'forum' ? 'text-primary' : ''
+              }`}
+            >
+              Форум
+            </button>
           </nav>
           <Button variant="ghost" size="icon" className="md:hidden">
             <Icon name="Menu" size={24} />
@@ -148,6 +283,205 @@ export default function Index() {
       </section>
 
       <main className="container py-12">
+        {currentSection === 'forum' ? (
+          <div>
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-3xl font-bold mb-2">Форум автолюбителей</h2>
+                <p className="text-muted-foreground">Обсуждайте автомобили, делитесь опытом и находите единомышленников</p>
+              </div>
+              {!selectedTopic && (
+                <Button 
+                  size="lg"
+                  className="bg-gradient-to-r from-primary to-secondary"
+                  onClick={() => setShowNewTopicDialog(true)}
+                >
+                  <Icon name="Plus" className="mr-2" size={20} />
+                  Создать тему
+                </Button>
+              )}
+            </div>
+
+            {showNewTopicDialog && (
+              <Card className="mb-8 animate-scale-in">
+                <CardHeader>
+                  <CardTitle>Создать новую тему</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Input 
+                    placeholder="Ваше имя"
+                    value={commentName}
+                    onChange={(e) => setCommentName(e.target.value)}
+                  />
+                  <Input 
+                    placeholder="Название темы"
+                    value={newTopicTitle}
+                    onChange={(e) => setNewTopicTitle(e.target.value)}
+                  />
+                  <select 
+                    className="w-full p-2 border rounded-md"
+                    value={newTopicCategory}
+                    onChange={(e) => setNewTopicCategory(e.target.value)}
+                  >
+                    <option>Общение</option>
+                    <option>Техническая помощь</option>
+                    <option>Выбор автомобиля</option>
+                    <option>Тюнинг</option>
+                  </select>
+                  <Textarea 
+                    placeholder="Текст сообщения..."
+                    value={newTopicText}
+                    onChange={(e) => setNewTopicText(e.target.value)}
+                    rows={6}
+                  />
+                </CardContent>
+                <CardFooter className="gap-2">
+                  <Button 
+                    className="flex-1 bg-gradient-to-r from-primary to-secondary"
+                    onClick={handleCreateTopic}
+                    disabled={!commentName || !newTopicTitle || !newTopicText}
+                  >
+                    Создать тему
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setShowNewTopicDialog(false)}
+                  >
+                    Отмена
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+
+            {selectedTopic ? (
+              <div className="animate-fade-in">
+                <Button 
+                  variant="ghost" 
+                  className="mb-4"
+                  onClick={() => setSelectedTopic(null)}
+                >
+                  <Icon name="ArrowLeft" className="mr-2" size={20} />
+                  Назад к темам
+                </Button>
+                
+                <Card className="mb-6">
+                  <CardHeader>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge>{selectedTopic.category}</Badge>
+                      <span className="text-sm text-muted-foreground">
+                        <Icon name="Eye" className="inline mr-1" size={14} />
+                        {selectedTopic.views} просмотров
+                      </span>
+                    </div>
+                    <CardTitle className="text-3xl">{selectedTopic.title}</CardTitle>
+                  </CardHeader>
+                </Card>
+
+                <div className="space-y-4 mb-8">
+                  {selectedTopic.posts.map((post, index) => (
+                    <Card key={post.id} className="animate-scale-in">
+                      <CardHeader>
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarFallback>
+                              {post.author.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="font-medium">{post.author}</p>
+                            <p className="text-sm text-muted-foreground">{post.date}</p>
+                          </div>
+                          {index === 0 && (
+                            <Badge variant="outline">Автор темы</Badge>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="leading-relaxed">{post.text}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Ответить в теме</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Input 
+                      placeholder="Ваше имя"
+                      value={forumPostName}
+                      onChange={(e) => setForumPostName(e.target.value)}
+                    />
+                    <Textarea 
+                      placeholder="Ваше сообщение..."
+                      value={forumPostText}
+                      onChange={(e) => setForumPostText(e.target.value)}
+                      rows={4}
+                    />
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-primary to-secondary"
+                      onClick={handleAddForumPost}
+                      disabled={!forumPostName || !forumPostText}
+                    >
+                      <Icon name="Send" className="mr-2" size={18} />
+                      Отправить ответ
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {forumTopics.map((topic, index) => (
+                  <Card 
+                    key={topic.id}
+                    className="hover:shadow-lg transition-shadow cursor-pointer animate-scale-in"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                    onClick={() => setSelectedTopic(topic)}
+                  >
+                    <CardHeader>
+                      <div className="flex items-start gap-4">
+                        <Avatar className="mt-1">
+                          <AvatarFallback>
+                            {topic.author.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge>{topic.category}</Badge>
+                          </div>
+                          <CardTitle className="text-xl mb-2 hover:text-primary transition-colors">
+                            {topic.title}
+                          </CardTitle>
+                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Icon name="User" size={14} />
+                              {topic.author}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Icon name="MessageSquare" size={14} />
+                              {topic.replies} ответов
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Icon name="Eye" size={14} />
+                              {topic.views} просмотров
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Icon name="Clock" size={14} />
+                              {topic.lastActivity}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
         <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="mb-8">
           <TabsList className="grid w-full max-w-md grid-cols-4">
             <TabsTrigger value="Все">Все</TabsTrigger>
@@ -289,6 +623,7 @@ export default function Index() {
               </Card>
             ))}
           </div>
+        )}
         )}
       </main>
 
